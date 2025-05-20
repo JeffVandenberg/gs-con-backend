@@ -22,31 +22,45 @@ The application will support the following core features:
 ### Multi-Convention Support
 - Management of multiple gaming conventions
 - Convention-specific configuration and settings
+- Convention days scheduling with operating hours
 - Data partitioning by convention
+- Currency configuration per convention
 
 ### User Management
 - User registration and authentication
 - Social login support (Google, Facebook, etc.)
 - Platform-wide role-based access control (Admin, Staff, Attendee)
 - User profile management
+- Friend connections between users
 
 ### Badge Management
 - Multiple badge tiers per convention
 - Badge purchase and assignment
+- Badge transfer between users
 - Convention-specific check-in process
 - Flexible custom fields for different conventions
+- Complimentary merchandise with badge tiers
 
 ### Event Management
 - Creation and scheduling of convention events
 - Event categorization
-- Location assignment
+- Location and space assignment
+- Multiple hosts per event
+- Badge tier restrictions for events
+- Public/private event visibility
 - Badge-based event registration
 - Configurable additional fields per convention
+
+### Volunteer Management
+- Volunteer day scheduling
+- Volunteer shift assignments
+- Shift tracking and management
 
 ### Game Library
 - Game database with detailed information
 - Multiple game libraries per convention
 - Game checkout system using badges
+- Notes and condition tracking for library games
 
 ### Vendor and Sponsor Management
 - Vendor registration and booth assignment
@@ -58,28 +72,50 @@ The application will support the following core features:
 - Product categorization
 - Support for product variations (sizes, colors, etc.)
 - Per-variation inventory tracking and pricing
+- Badge tier merchandise associations
+
+### Promotions
+- Coupon code generation and management
+- Discount types (percentage, fixed amount)
+- Restrictions by merchandise or badges
+- Usage tracking and limits
+
+### Auditing and Security
+- Comprehensive audit logging
+- Badge activity tracking
+- User action history
 
 ## Database Schema Summary
 
 The database design includes the following key entities:
 
-- **Conventions**: Stores information about different gaming conventions
+- **Conventions**: Stores information about different gaming conventions with currency settings
+- **ConventionDays**: Defines the specific days and operating hours for each convention
 - **BadgeTiers**: Defines different badge levels for each convention
 - **Users**: Stores user account information with platform-wide roles
 - **SocialLogins**: Manages third-party authentication providers
-- **Badges**: Links users to conventions through purchased badges
-- **Events**: Manages scheduled events for each convention
+- **Friends**: Tracks friend relationships between users
+- **Badges**: Links users to conventions through purchased badges, with transfer history
+- **Events**: Manages scheduled events for each convention, with creator/modifier tracking and visibility settings
 - **EventCategories**: Categorizes different types of events per convention
 - **Locations**: Defines event venues and rooms for each convention
+- **Spaces**: Defines specific spaces within locations (tables, areas, etc.)
+- **EventHosts**: Tracks multiple hosts for each event
+- **EventTierRestrictions**: Defines which badge tiers can access specific events
 - **EventRegistrations**: Tracks badge registrations for events
+- **VolunteerDays**: Defines days for volunteer shifts
+- **VolunteerShifts**: Tracks volunteer assignments with roles and times
 - **Games**: Stores information about games
 - **GameLibraries**: Manages collections of games for each convention
-- **LibraryGames**: Links games to specific libraries with quantity and condition
+- **LibraryGames**: Links games to specific libraries with quantity, condition, and notes
 - **GameCheckouts**: Tracks game borrowing by badge holders
 - **Vendors**: Manages vendor information for each convention
 - **Sponsors**: Tracks sponsors for each convention
 - **Merchandise**: Manages convention-specific merchandise items
 - **MerchandiseVariations**: Tracks variations of merchandise items with specific pricing and inventory
+- **BadgeTierMerchandise**: Links badge tiers to merchandise items for complimentary items
+- **Coupons**: Manages discount codes for badges and merchandise
+- **AuditLog**: Tracks all significant changes to entities for security and auditing
 
 All convention-specific data is partitioned by ConventionID to support multiple conventions within the same database.
 
@@ -89,16 +125,26 @@ The API follows RESTful principles and includes endpoints for:
 
 - Authentication (registration, login, token refresh, social login)
 - Convention management and configuration
+- Convention days scheduling
 - User management with platform-wide roles
+- User friend connections
 - Badge tier configuration and management
-- Badge purchase, assignment, and check-in
+- Badge purchase, assignment, transfer, and check-in
+- Badge tier merchandise associations
 - Event creation, retrieval, and management per convention
+- Event space assignment
+- Event host management
+- Event tier restrictions
 - Event registration using badges
+- Volunteer day and shift management
 - Game database management
 - Game library creation and management per convention
 - Game checkout system using badges
 - Vendor and sponsor management per convention
 - Merchandise inventory and management
+- Merchandise variations
+- Coupon code generation and validation
+- Audit log retrieval and analysis
 
 All endpoints use JSON for data exchange and follow consistent patterns for error handling, pagination, and filtering. Most endpoints include the convention context, either in the URL path or as a required parameter.
 

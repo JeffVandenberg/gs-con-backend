@@ -18,11 +18,10 @@ This document provides a visual representation of the database schema for the ga
 | Website       |       | SoldCount      |       | CreatedAt     |
 | Logo          |       | Benefits       |       | UpdatedAt     |
 | Status        |       +----------------+       +---------------+
+| Currency      |              |                        |
 | CreatedAt     |              |                        |
-| UpdatedAt     |              |                        |
-+---------------+              |                        |
-       |                       |                +-------v-------+
-       |                       |                | SocialLogins  |
+| UpdatedAt     |              |                +-------v-------+
++---------------+              |                | SocialLogins  |
        |                       |                +---------------+
        |                       |                | PK: LoginID   |
        |                       |                | FK: UserID    |
@@ -32,6 +31,19 @@ This document provides a visual representation of the database schema for the ga
        |                       |                | RefreshToken  |
        |                       |                | ExpiresAt     |
        |                       |                +---------------+
+       |                       |                       |
+       |                       |                       |
+       |                       |                +------v------+
+       |                       |                |   Friends   |
+       |                       |                +-------------+
+       |                       |                | PK: FriendID|
+       |                       |                | FK: UserID  |
+       |                       |                | FK: FriendUID|
+       |                       |                | Status      |
+       |                       |                | RequestDate |
+       |                       |                | AcceptDate  |
+       |                       |                | Notes       |
+       |                       |                +-------------+
        |                       |
        |                       |
        |                +------v------+
@@ -47,6 +59,8 @@ This document provides a visual representation of the database schema for the ga
        |                | Status      |          |
        |                | CheckedIn   |          |
        |                | CheckInTime |          |
+       |                | PrevUserID  |          |
+       |                | TransferDate|          |
        |                | AddFields   |          |
        |                +-------------+          |
        |                      |                  |
@@ -54,7 +68,7 @@ This document provides a visual representation of the database schema for the ga
        |                      v                  |
        |               +-------------+           |
        |               |    Event    |           |
-       |               | Registrations|           |
+       |               | Registrations|          |
        |               +-------------+           |
        |               | PK: RegID   |           |
        |               | FK: EventID |           |
@@ -75,10 +89,14 @@ This document provides a visual representation of the database schema for the ga
        |               | StartTime   |           |
        |               | EndTime     |           |
        |               | FK: LocID   |           |
+       |               | FK: SpaceID |           |
        |               | FK: CatID   |           |
        |               | MaxAttendees|           |
        |               | CurrAttendees|          |
        |               | Status      |           |
+       |               | CreatedByUID|           |
+       |               | ModifiedByUID|          |
+       |               | IsPublic    |           |
        |               | AddFields   |           |
        |               +-------------+           |
        |                  |       |              |
@@ -93,6 +111,79 @@ This document provides a visual representation of the database schema for the ga
        |        | Capacity  |  | Name      |
        |        | Description| | Description|
        |        | Floor     |  +-----------+
+       |        +-----------+        ^
+       |              |              |
+       |              v              |
+       |        +-----------+        |
+       |        |   Spaces  |        |
+       |        +-----------+        |
+       |        | PK: SpaceID|        |
+       |        | FK: LocID  |        |
+       |        | Name       |        |
+       |        | Capacity   |        |
+       |        | Description|        |
+       |        | Status     |        |
+       |        +-----------+        |
+       |                             |
+       |                             |
+       |        +-----------+        |
+       |        | EventHosts|        |
+       |        +-----------+        |
+       |        | PK: HostID|        |
+       |        | FK: EventID|       |
+       |        | FK: BadgeID|       |
+       |        | Role      |        |
+       |        | Notes     |        |
+       |        +-----------+        |
+       |                             |
+       |                             |
+       |        +----------------+   |
+       |        | EventTierRestr.|   |
+       |        +----------------+   |
+       |        | PK: RestrID    |   |
+       |        | FK: EventID    |   |
+       |        | FK: TierID     |   |
+       |        | IsAllowed      |   |
+       |        +----------------+   |
+       |                             |
+       |                             |
+       |        +-----------+        |
+       |        | ConvDays  |        |
+       |        +-----------+        |
+       |------->| PK: DayID |        |
+       |        | FK: ConvID|        |
+       |        | Date      |        |
+       |        | StartTime |        |
+       |        | EndTime   |        |
+       |        | Description|       |
+       |        | IsActive  |        |
+       |        +-----------+        |
+       |                             |
+       |                             |
+       |        +-----------+        |
+       |        | VolunteerDays|     |
+       |        +-----------+        |
+       |------->| PK: VolDayID|      |
+       |        | FK: ConvID |       |
+       |        | Date       |       |
+       |        | StartTime  |       |
+       |        | EndTime    |       |
+       |        | Description|       |
+       |        +-----------+        |
+       |              |              |
+       |              v              |
+       |        +-----------+        |
+       |        | VolShifts |        |
+       |        +-----------+        |
+       |        | PK: ShiftID|       |
+       |        | FK: VolDayID|      |
+       |        | FK: BadgeID|<------+
+       |        | StartTime |
+       |        | EndTime   |
+       |        | Role      |
+       |        | Location  |
+       |        | Notes     |
+       |        | Status    |
        |        +-----------+
        |
        |
@@ -105,8 +196,8 @@ This document provides a visual representation of the database schema for the ga
 | Description |       | Quantity       |       | Description  |
 | Status      |       | Available      |       | MinPlayers   |
 | CreatedAt   |       | Condition      |       | MaxPlayers   |
-| UpdatedAt   |       +----------------+       | Duration     |
-+-------------+              |                 | YearPublished|
+| UpdatedAt   |       | Notes          |       | Duration     |
++-------------+       +----------------+       | YearPublished|
        |                     |                 | FK: CategoryID|
        |                     |                 +---------------+
        |                     |
@@ -137,17 +228,48 @@ This document provides a visual representation of the database schema for the ga
 | Description |       | Description    |              |
 | Website     |       | Website        |              |
 +-------------+       | Logo           |              |
-                      +----------------+              |
-                                                      v
-                                               +---------------+
-                                               | MerchVariations|
-                                               +---------------+
-                                               | PK: VarID     |
-                                               | FK: MerchID   |
-                                               | Description   |
-                                               | Price         |
-                                               | Quantity      |
-                                               +---------------+
+       |              +----------------+              |
+       |                                              v
+       |                                       +---------------+
+       |                                       | MerchVariations|
+       |                                       +---------------+
+       |                                       | PK: VarID     |
+       |                                       | FK: MerchID   |
+       |                                       | Description   |
+       |                                       | Price         |
+       |                                       | Quantity      |
+       |                                       +---------------+
+       |                                              |
+       |                                              |
+       |                                              v
+       |                                       +---------------+
+       |                                       | BadgeTierMerch|
+       |                                       +---------------+
+       |                                       | PK: BTMerchID |
+       |                                       | FK: TierID    |
+       |                                       | FK: VarID     |
+       |                                       | Quantity      |
+       |                                       | IsOptional    |
+       |                                       +---------------+
+       |
+       |
+       |              +----------------+       +---------------+
+       |              |   Coupons      |       |   AuditLog   |
+       |              +----------------+       +---------------+
+       |------------->| PK: CouponID   |       | PK: LogID    |
+       |              | FK: ConvID     |       | EntityType   |
+       |              | Code           |       | EntityID     |
+       |              | Description    |       | Action       |
+       |              | DiscountType   |       | FK: UserID   |
+       |              | DiscountValue  |       | Timestamp    |
+       |              | AppliesTo      |       | OldValue     |
+       |              | MinPurchase    |       | NewValue     |
+       |              | MaxUses        |       | IPAddress    |
+       |              | UsedCount      |       | Notes        |
+       |              | StartDate      |       +---------------+
+       |              | EndDate        |
+       |              | IsActive       |
+       |              +----------------+
 ```
 
 ## Entity Relationships
@@ -155,16 +277,28 @@ This document provides a visual representation of the database schema for the ga
 ### One-to-Many Relationships
 - **Conventions to BadgeTiers**: One convention can have multiple badge tiers.
 - **Users to SocialLogins**: One user can have multiple social login providers.
+- **Users to Friends**: One user can have multiple friends.
 - **Users to Badges**: One user can have multiple badges (for different conventions).
 - **Conventions to Badges**: One convention can have many badges issued.
 - **BadgeTiers to Badges**: One badge tier can be assigned to many badges.
 - **Conventions to Events**: One convention can have many events.
 - **Conventions to EventCategories**: One convention can have many event categories.
 - **Conventions to Locations**: One convention can have many locations.
+- **Locations to Spaces**: One location can have many spaces.
 - **Events to EventRegistrations**: One event can have many registrations.
+- **Events to EventHosts**: One event can have multiple hosts.
+- **Badges to EventHosts**: One badge can host multiple events.
+- **Events to EventTierRestrictions**: One event can have restrictions for multiple badge tiers.
+- **BadgeTiers to EventTierRestrictions**: One badge tier can be restricted from multiple events.
 - **Badges to EventRegistrations**: One badge can be used to register for many events.
+- **Users to Events**: One user can create or modify multiple events.
+- **Conventions to ConventionDays**: One convention can have multiple days.
+- **Conventions to VolunteerDays**: One convention can have multiple volunteer days.
+- **VolunteerDays to VolunteerShifts**: One volunteer day can have multiple shifts.
+- **Badges to VolunteerShifts**: One badge can be assigned to multiple volunteer shifts.
 - **EventCategories to Events**: One category can include many events.
 - **Locations to Events**: One location can host many events.
+- **Spaces to Events**: One space can be used for many events.
 - **Conventions to GameLibraries**: One convention can have multiple game libraries.
 - **GameLibraries to LibraryGames**: One game library can contain many games.
 - **Games to LibraryGames**: One game can be in multiple libraries.
@@ -174,7 +308,11 @@ This document provides a visual representation of the database schema for the ga
 - **Conventions to Vendors**: One convention can have many vendors.
 - **Conventions to Sponsors**: One convention can have many sponsors.
 - **Conventions to Merchandise**: One convention can have many merchandise items.
-- **Merchandise to MerchandiseVariations**: One-to-many relationship. One merchandise item can have multiple variations (sizes, colors, etc.).
+- **Merchandise to MerchandiseVariations**: One merchandise item can have multiple variations (sizes, colors, etc.).
+- **BadgeTiers to BadgeTierMerchandise**: One badge tier can include multiple merchandise items.
+- **MerchandiseVariations to BadgeTierMerchandise**: One merchandise variation can be included in multiple badge tiers.
+- **Conventions to Coupons**: One convention can have multiple coupons.
+- **Users to AuditLog**: One user can have multiple audit log entries.
 
 ### Many-to-Many Relationships
 - **Users to Conventions**: Many users can attend many conventions (through Badges).
@@ -187,11 +325,20 @@ This document provides a visual representation of the database schema for the ga
 1. **Referential Integrity**:
    - A BadgeTier must reference a valid Convention
    - A SocialLogin must reference a valid User
+   - A Friend must reference valid Users
    - A Badge must reference a valid User, Convention, and BadgeTier
-   - An Event must reference a valid Convention, Location, and EventCategory
+   - A Badge transfer must reference a valid previous User
+   - An Event must reference a valid Convention, Location, EventCategory, and optionally a Space
+   - An Event must reference valid Users for created by and modified by
    - A Location must reference a valid Convention
+   - A Space must reference a valid Location
    - An EventCategory must reference a valid Convention
    - An EventRegistration must reference a valid Event and Badge
+   - An EventHost must reference a valid Event and Badge
+   - An EventTierRestriction must reference a valid Event and BadgeTier
+   - A ConventionDay must reference a valid Convention
+   - A VolunteerDay must reference a valid Convention
+   - A VolunteerShift must reference a valid VolunteerDay and Badge
    - A GameLibrary must reference a valid Convention
    - A LibraryGame must reference a valid GameLibrary and Game
    - A GameCheckout must reference a valid LibraryGame, Badge, and Staff User
@@ -199,6 +346,9 @@ This document provides a visual representation of the database schema for the ga
    - A Sponsor must reference a valid Convention
    - A Merchandise item must reference a valid Convention
    - A MerchandiseVariation must reference a valid Merchandise item
+   - A BadgeTierMerchandise must reference a valid BadgeTier and MerchandiseVariation
+   - A Coupon must reference a valid Convention
+   - An AuditLog entry must reference a valid User
 
 2. **Unique Constraints**:
    - User Email must be unique

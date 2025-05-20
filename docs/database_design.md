@@ -17,8 +17,18 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **Website**: Convention website
 - **Logo**: Path to logo image
 - **Status**: Planning, Active, Completed, Cancelled
+- **Currency**: Currency used for this convention (USD, EUR, etc.)
 - **CreatedAt**: Timestamp of creation
 - **UpdatedAt**: Timestamp of last update
+
+### ConventionDays
+- **DayID** (PK): Unique identifier
+- **ConventionID** (FK): Reference to Conventions table
+- **Date**: Date of this convention day
+- **StartTime**: When the convention opens on this day
+- **EndTime**: When the convention closes on this day
+- **Description**: Additional information about this day
+- **IsActive**: Boolean indicating if this day is active
 
 ### BadgeTiers
 - **TierID** (PK): Unique identifier
@@ -51,6 +61,15 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **CreatedAt**: Timestamp of creation
 - **UpdatedAt**: Timestamp of last update
 
+### Friends
+- **FriendshipID** (PK): Unique identifier
+- **UserID** (FK): Reference to Users table (the user who initiated the friendship)
+- **FriendUserID** (FK): Reference to Users table (the friend)
+- **Status**: Pending, Accepted, Declined, Blocked
+- **RequestDate**: When the friendship was requested
+- **AcceptDate**: When the friendship was accepted (null if not accepted)
+- **Notes**: Additional information about this friendship
+
 ### Badges
 - **BadgeID** (PK): Unique identifier
 - **UserID** (FK): Reference to Users table
@@ -62,7 +81,28 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **Status**: Pending, Confirmed, Cancelled, Refunded
 - **CheckedIn**: Boolean indicating if they've checked in
 - **CheckInTime**: When they checked in
+- **PreviousUserID** (FK): Reference to Users table if badge was transferred
+- **TransferDate**: When the badge was transferred to current user
 - **AdditionalFields**: JSON object storing convention-specific custom fields
+
+### VolunteerDays
+- **VolunteerDayID** (PK): Unique identifier
+- **ConventionID** (FK): Reference to Conventions table
+- **Date**: Date for volunteer shifts
+- **StartTime**: When volunteer shifts start on this day
+- **EndTime**: When volunteer shifts end on this day
+- **Description**: Additional information about this volunteer day
+
+### VolunteerShifts
+- **ShiftID** (PK): Unique identifier
+- **BadgeID** (FK): Reference to Badges table of the volunteer
+- **VolunteerDayID** (FK): Reference to VolunteerDays table
+- **StartTime**: When this volunteer shift starts
+- **EndTime**: When this volunteer shift ends
+- **Role**: Volunteer role during this shift
+- **Location**: Where the volunteer is stationed
+- **Notes**: Additional information about this shift
+- **Status**: Scheduled, Completed, No-Show, etc.
 
 ### Events
 - **EventID** (PK): Unique identifier
@@ -72,10 +112,14 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **StartTime**: When the event starts
 - **EndTime**: When the event ends
 - **LocationID** (FK): Where the event is held
+- **SpaceID** (FK): Reference to Spaces table (optional)
 - **CategoryID** (FK): Type of event (board game, RPG, etc.)
 - **MaxAttendees**: Maximum capacity
 - **CurrentAttendees**: Current number registered
 - **Status**: Scheduled, Cancelled, Full, etc.
+- **CreatedByUserID** (FK): Reference to Users table who created the event
+- **ModifiedByUserID** (FK): Reference to Users table who last modified the event
+- **IsPublic**: Boolean indicating if the event is publicly visible
 - **AdditionalFields**: JSON object storing convention-specific custom fields
 
 ### EventCategories
@@ -91,6 +135,27 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **Capacity**: Maximum number of people
 - **Description**: Additional details about the location
 - **Floor**: Which floor of the venue
+
+### Spaces
+- **SpaceID** (PK): Unique identifier
+- **LocationID** (FK): Reference to Locations table
+- **Name**: Name of the space within the location
+- **Capacity**: Maximum number of people for this space
+- **Description**: Additional details about the space
+- **Status**: Available, Reserved, Maintenance, etc.
+
+### EventHosts
+- **HostID** (PK): Unique identifier
+- **EventID** (FK): Reference to Events table
+- **BadgeID** (FK): Reference to Badges table of the host
+- **Role**: Host role (Main Host, Co-Host, Assistant, etc.)
+- **Notes**: Additional information about this host
+
+### EventTierRestrictions
+- **RestrictionID** (PK): Unique identifier
+- **EventID** (FK): Reference to Events table
+- **TierID** (FK): Reference to BadgeTiers table
+- **IsAllowed**: Boolean indicating if this tier is allowed to register for this event
 
 ### EventRegistrations
 - **RegistrationID** (PK): Unique identifier
@@ -125,6 +190,13 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **Price**: Cost of this variation
 - **Quantity**: Number of items available for this variation
 
+### BadgeTierMerchandise
+- **BadgeTierMerchandiseID** (PK): Unique identifier
+- **TierID** (FK): Reference to BadgeTiers table
+- **VariationID** (FK): Reference to MerchandiseVariations table
+- **Quantity**: Number of this item included with the badge tier
+- **IsOptional**: Boolean indicating if the attendee can choose to receive this item
+
 ### Games
 - **GameID** (PK): Unique identifier
 - **Title**: Game title
@@ -152,6 +224,7 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **Quantity**: Number of copies available
 - **Available**: Number currently available
 - **Condition**: New, Good, Fair, etc.
+- **Notes**: Additional information about this game in the library
 
 ### GameCheckouts
 - **CheckoutID** (PK): Unique identifier
@@ -160,6 +233,21 @@ The database will be implemented using PostgreSQL, which provides robust support
 - **CheckoutTime**: When it was checked out
 - **ReturnTime**: When it was returned (null if still out)
 - **StaffUserID** (FK): Staff who processed the checkout
+
+### Coupons
+- **CouponID** (PK): Unique identifier
+- **ConventionID** (FK): Reference to Conventions table
+- **Code**: Unique coupon code
+- **Description**: Description of the coupon
+- **DiscountType**: Percentage, Fixed Amount, etc.
+- **DiscountValue**: Value of the discount
+- **AppliesTo**: Badges, Merchandise, Both
+- **MinimumPurchase**: Minimum purchase amount required (optional)
+- **MaxUses**: Maximum number of times this coupon can be used
+- **UsedCount**: Number of times this coupon has been used
+- **StartDate**: When the coupon becomes valid
+- **EndDate**: When the coupon expires
+- **IsActive**: Boolean indicating if the coupon is currently active
 
 ### Sponsors
 - **SponsorID** (PK): Unique identifier
@@ -191,31 +279,63 @@ The database will be implemented using PostgreSQL, which provides robust support
 
 8. **Conventions to Locations**: One-to-many relationship. One convention can have many locations.
 
-9. **Events to EventCategories**: Many-to-one relationship. Many events can belong to one category.
+9. **Locations to Spaces**: One-to-many relationship. One location can have many spaces.
 
-10. **Events to Locations**: Many-to-one relationship. Many events can be held in one location.
+10. **Events to EventCategories**: Many-to-one relationship. Many events can belong to one category.
 
-11. **Events to EventRegistrations**: One-to-many relationship. One event can have many registrations.
+11. **Events to Locations**: Many-to-one relationship. Many events can be held in one location.
 
-12. **Badges to EventRegistrations**: One-to-many relationship. One badge can be used to register for many events.
+12. **Events to Spaces**: Many-to-one relationship. Many events can be held in one space.
 
-13. **Conventions to GameLibraries**: One-to-many relationship. One convention can have multiple game libraries.
+13. **Events to EventRegistrations**: One-to-many relationship. One event can have many registrations.
 
-14. **GameLibraries to LibraryGames**: One-to-many relationship. One game library can contain many games.
+14. **Events to EventHosts**: One-to-many relationship. One event can have multiple hosts.
 
-15. **Games to LibraryGames**: One-to-many relationship. One game can be in multiple libraries.
+15. **Badges to EventHosts**: One-to-many relationship. One badge can host multiple events.
 
-16. **LibraryGames to GameCheckouts**: One-to-many relationship. One library game can have multiple checkout records over time.
+16. **Events to EventTierRestrictions**: One-to-many relationship. One event can have restrictions for multiple badge tiers.
 
-17. **Badges to GameCheckouts**: One-to-many relationship. One badge can be used to check out multiple games.
+17. **BadgeTiers to EventTierRestrictions**: One-to-many relationship. One badge tier can be restricted from multiple events.
 
-18. **Conventions to Vendors**: One-to-many relationship. One convention can have many vendors.
+18. **Badges to EventRegistrations**: One-to-many relationship. One badge can be used to register for many events.
 
-19. **Conventions to Sponsors**: One-to-many relationship. One convention can have many sponsors.
+19. **Users to Events**: One-to-many relationship. One user can create or modify multiple events.
 
-20. **Conventions to Merchandise**: One-to-many relationship. One convention can have many merchandise items.
+20. **Conventions to ConventionDays**: One-to-many relationship. One convention can have multiple days.
 
-21. **Merchandise to MerchandiseVariations**: One-to-many relationship. One merchandise item can have multiple variations.
+21. **Conventions to VolunteerDays**: One-to-many relationship. One convention can have multiple volunteer days.
+
+22. **VolunteerDays to VolunteerShifts**: One-to-many relationship. One volunteer day can have multiple shifts.
+
+23. **Badges to VolunteerShifts**: One-to-many relationship. One badge can be assigned to multiple volunteer shifts.
+
+24. **Users to Friends**: One-to-many relationship. One user can have multiple friends.
+
+25. **Conventions to GameLibraries**: One-to-many relationship. One convention can have multiple game libraries.
+
+26. **GameLibraries to LibraryGames**: One-to-many relationship. One game library can contain many games.
+
+27. **Games to LibraryGames**: One-to-many relationship. One game can be in multiple libraries.
+
+28. **LibraryGames to GameCheckouts**: One-to-many relationship. One library game can have multiple checkout records over time.
+
+29. **Badges to GameCheckouts**: One-to-many relationship. One badge can be used to check out multiple games.
+
+30. **Conventions to Vendors**: One-to-many relationship. One convention can have many vendors.
+
+31. **Conventions to Sponsors**: One-to-many relationship. One convention can have many sponsors.
+
+32. **Conventions to Merchandise**: One-to-many relationship. One convention can have many merchandise items.
+
+33. **Merchandise to MerchandiseVariations**: One-to-many relationship. One merchandise item can have multiple variations.
+
+34. **BadgeTiers to BadgeTierMerchandise**: One-to-many relationship. One badge tier can include multiple merchandise items.
+
+35. **MerchandiseVariations to BadgeTierMerchandise**: One-to-many relationship. One merchandise variation can be included in multiple badge tiers.
+
+36. **Conventions to Coupons**: One-to-many relationship. One convention can have multiple coupons.
+
+37. **Users to AuditLog**: One-to-many relationship. One user can have multiple audit log entries.
 
 ## Additional Considerations
 
@@ -239,6 +359,18 @@ The database will be implemented using PostgreSQL, which provides robust support
 - Attendance metrics
 - Popular events
 - Financial tracking
+
+### AuditLog
+- **LogID** (PK): Unique identifier
+- **EntityType**: Type of entity being audited (Badge, Event, User, etc.)
+- **EntityID**: ID of the entity being audited
+- **Action**: Type of action (Create, Update, Delete, Transfer, etc.)
+- **UserID** (FK): Reference to Users table who performed the action
+- **Timestamp**: When the action occurred
+- **OldValue**: Previous value (JSON format)
+- **NewValue**: New value (JSON format)
+- **IPAddress**: IP address of the user who performed the action
+- **Notes**: Additional information about this action
 
 ### Future Extensions
 - Payment processing
